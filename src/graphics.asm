@@ -1,11 +1,11 @@
 .importzp nmi_ready
 .import palette
-.import nmt_update
-.importzp nmt_update_len
+.importzp scroll_nmt
 
 .export ppu_init
 .export ppu_enable_frame
 .export ppu_disable
+.export ppu_switch
 
 .include "defs.inc"
 
@@ -65,3 +65,8 @@ ppu_disable:
     lda #2
     sta nmi_ready
     rts
+
+ppu_switch:
+    ldx scroll_nmt
+    inx
+    stx scroll_nmt

@@ -1,9 +1,8 @@
 .export nmi
 .export oam
 .exportzp nmi_ready
+.exportzp scroll_nmt
 .export palette
-.export nmt_update
-.exportzp nmt_update_len
 
 ;inspired by https://github.com/bbbradsmith/NES-ca65-example/blob/master/example.s
 .include "defs.inc"
@@ -11,7 +10,6 @@
 .segment "ZEROPAGE"
 nmi_count: .res 1
 nmi_ready: .res 1
-nmt_update_len: .res 1
 nmi_lock: .res 1
 scroll_nmt: .res 1
 scroll_x: .res 1
@@ -19,7 +17,6 @@ scroll_y: .res 1
 
 .segment "BSS"
 palette: .res 32
-nmt_update: .res 256
 
 .segment "OAM"
 oam: .res 256
@@ -71,24 +68,6 @@ nmi:
 		cpx #32
 		bcc :-
 
-	ldx #0
-	cpx nmt_update_len
-	bcs @scroll
-	@nmt_update_loop:
-		lda nmt_update, X
-		sta PPU_ADDR
-		inx
-		lda nmt_update, X
-		sta PPU_ADDR
-		inx
-		lda nmt_update, X
-		sta PPU_DATA
-		inx
-		cpx nmt_update_len
-		bcc @nmt_update_loop
-
-	lda #0
-	sta nmt_update_len
 @scroll:
 	lda scroll_nmt
 	and #%00000011
