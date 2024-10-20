@@ -3,6 +3,7 @@ LD65 = cc65/bin/ld65
 MAKE = make
 
 SOURCES = $(shell find src -type f -name "*.asm")
+HEADERS = $(shell find src -type f -name "*.inc")
 OBJECTS = $(patsubst src/%.asm, build/%.o, $(SOURCES))
 
 CYAN = \e[1;36m
@@ -27,12 +28,12 @@ build:
 
 all: build/rom.nes build/rom.nes.dbg build/rom.map build/rom.labels
 
-build/%.o: src/%.asm cc65 | build
+build/%.o: src/%.asm $(CA65) $(HEADERS) | build
 	@echo "$(CYAN)$(PRE_ASM)$(RESET) $<"
 	@$(CA65) $< -g -o $@
-build/rom.nes build/rom.nes.dbg build/rom.map: $(OBJECTS) | build
+build/rom.nes build/rom.nes.dbg build/rom.map: $(OBJECTS) $(LD65) | build
 	@echo "$(YELLOW)$(PRE_NES)$(RESET) $@"
-	@$(LD65) -C linker.ld $^ -m build/rom.map -Ln build/rom.labels --dbgfile build/rom.nes.dbg -o build/rom.nes
+	@$(LD65) -C linker.ld $(OBJECTS) -m build/rom.map -Ln build/rom.labels --dbgfile build/rom.nes.dbg -o build/rom.nes
 
 cc65: $(CA65) $(LD65)
 
