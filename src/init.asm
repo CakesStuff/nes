@@ -2,12 +2,7 @@
 .import oam
 .export reset
 
-PPU_CTRL = $2000
-PPU_MASK = $2001
-
-APU_CTRL = $4015
-APU_DMC_SETTINGS = $4010
-APU_FRAME_COUNTER = $4017
+.include "defs.inc"
 
 .segment "CODE"
 reset:

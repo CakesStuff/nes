@@ -1,8 +1,5 @@
 .segment "HEADER"
-
-INES_MAPPER	= 0 ; 0 = NROM meaning 32k PRG 8k CHR
-INES_MIRROR	= 1 ; 0 = horizontal (for vertical)
-INES_SRAM	= 0
+.include "defs.inc"
 
 .byte 'N', 'E', 'S', $1A
 .byte $02 ; 2 * 16k PRG

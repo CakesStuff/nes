@@ -1,30 +1,25 @@
 .export nmi
 .export oam
+.exportzp nmi_ready
+.export palette
+.export nmt_update
+.exportzp nmt_update_len
 
 ;inspired by https://github.com/bbbradsmith/NES-ca65-example/blob/master/example.s
-
-PPU_CTRL = $2000
-PPU_MASK = $2001
-PPU_STATUS = $2002
-PPU_OAM_ADDR = $2003
-PPU_OAM_DATA = $2004
-PPU_SCROLL = $2005
-PPU_ADDR = $2006
-PPU_DATA = $2007
-PPU_OAM_DMA_HIGH = $4014
+.include "defs.inc"
 
 .segment "ZEROPAGE"
 nmi_count: .res 1
 nmi_ready: .res 1
-
-.segment "BSS"
-nmi_lock: .res 1
-palette: .res 32
 nmt_update_len: .res 1
-nmt_update: .res 256
+nmi_lock: .res 1
 scroll_nmt: .res 1
 scroll_x: .res 1
 scroll_y: .res 1
+
+.segment "BSS"
+palette: .res 32
+nmt_update: .res 256
 
 .segment "OAM"
 oam: .res 256
