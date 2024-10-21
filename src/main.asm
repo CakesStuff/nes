@@ -1,5 +1,5 @@
 .import ppu_init
-.import ppu_enable_frame
+.import ppu_update_frame
 .import ppu_switch
 .import ppu_set_tile
 .import ppu_wait
@@ -20,7 +20,7 @@ main:
 start_loop:
 	pha
 	jsr ppu_set_xscroll
-	jsr ppu_enable_frame
+	jsr ppu_update_frame
 	jsr ppu_wait
 	pla
 	clc
@@ -30,10 +30,8 @@ start_loop:
 	lda #0
 	jsr ppu_set_xscroll
 	jsr ppu_switch
-	jsr ppu_enable_frame
+	jsr ppu_update_frame
 	jsr ppu_wait
 
 loop:
-	jsr ppu_enable_frame
-	jsr ppu_wait
 	jmp loop

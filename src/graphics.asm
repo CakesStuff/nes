@@ -4,7 +4,7 @@
 .importzp scroll_x
 
 .export ppu_init
-.export ppu_enable_frame
+.export ppu_update_frame
 .export ppu_disable
 .export ppu_switch
 .export ppu_set_tile
@@ -66,7 +66,7 @@ ppu_clear:
 	bne @loop
     rts
 
-ppu_enable_frame:
+ppu_update_frame:
     lda #1
     sta nmi_ready
     rts
