@@ -2,6 +2,7 @@
 .export oam
 .exportzp nmi_ready
 .exportzp scroll_nmt
+.exportzp scroll_x
 .export palette
 
 ;inspired by https://github.com/bbbradsmith/NES-ca65-example/blob/master/example.s

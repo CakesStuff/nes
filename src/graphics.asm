@@ -1,6 +1,7 @@
 .importzp nmi_ready
 .import palette
 .importzp scroll_nmt
+.importzp scroll_x
 
 .export ppu_init
 .export ppu_enable_frame
@@ -9,6 +10,7 @@
 .export ppu_set_tile
 .export ppu_wait
 .export ppu_write_logo
+.export ppu_set_xscroll
 
 .include "defs.inc"
 
@@ -114,6 +116,10 @@ ppu_wait:
     lda nmi_ready
     cmp #0
     bne ppu_wait
+    rts
+
+ppu_set_xscroll:
+    sta scroll_x
     rts
 
 .segment "RODATA"
