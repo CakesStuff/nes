@@ -6,6 +6,7 @@
 .import ppu_write_logo
 .import ppu_disable
 .import ppu_set_xscroll
+.import ppu_show_start_instruction
 
 .export main
 
@@ -30,6 +31,10 @@ start_loop:
 	lda #0
 	jsr ppu_set_xscroll
 	jsr ppu_switch
+	jsr ppu_update_frame
+	jsr ppu_wait
+
+	jsr ppu_show_start_instruction
 	jsr ppu_update_frame
 	jsr ppu_wait
 

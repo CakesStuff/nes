@@ -11,6 +11,7 @@
 .export ppu_wait
 .export ppu_write_logo
 .export ppu_set_xscroll
+.export ppu_show_start_instruction
 
 .include "defs.inc"
 
@@ -197,5 +198,41 @@ ppu_write_logo:
     inx
     cpx #13
     bcc @xloop
+
+    rts
+
+ppu_show_start_instruction:
+    lda #$26
+    sta PPU_ADDR
+    lda #$EA
+    sta PPU_ADDR
+    lda #TILE_LETTER_P
+    sta PPU_DATA
+    lda #TILE_LETTER_R
+    sta PPU_DATA
+    lda #TILE_LETTER_E
+    sta PPU_DATA
+    lda #TILE_LETTER_S
+    sta PPU_DATA
+    lda #TILE_LETTER_S
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    lda #TILE_LETTER_S
+    sta PPU_DATA
+    lda #TILE_LETTER_T
+    sta PPU_DATA
+    lda #TILE_LETTER_A
+    sta PPU_DATA
+    lda #TILE_LETTER_R
+    sta PPU_DATA
+    lda #TILE_LETTER_T
+    sta PPU_DATA
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
 
     rts
