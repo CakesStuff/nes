@@ -1,5 +1,6 @@
+.import oam
+
 .export nmi
-.export oam
 .exportzp nmi_ready
 .exportzp scroll_nmt
 .exportzp scroll_x
@@ -19,8 +20,6 @@ scroll_y: .res 1
 .segment "BSS"
 palette: .res 32
 
-.segment "OAM"
-oam: .res 256
 
 .segment "CODE"
 nmi:

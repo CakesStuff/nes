@@ -3,6 +3,7 @@
 .importzp scroll_nmt
 .importzp scroll_x
 
+.export oam
 .export ppu_init
 .export ppu_update_frame
 .export ppu_disable
@@ -22,8 +23,8 @@ bgr_palette:
 .byte $00, $00, $00, $00
 .byte $00, $00, $00, $00
 spr_palette:
-.byte $0A, $00, $00, $00
-.byte $00, $00, $00, $00
+.byte $0A, $28, $38, $39
+.byte $0A, $1D, $20, $10
 .byte $00, $00, $00, $00
 .byte $00, $00, $00, $00
 
@@ -236,3 +237,8 @@ ppu_show_start_instruction:
     sta PPU_SCROLL
 
     rts
+
+
+.segment "OAM"
+oam: .res 256
+;TODO: ADD SPRITES
