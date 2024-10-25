@@ -8,6 +8,9 @@
 .import ppu_set_xscroll
 .import ppu_show_start_instruction
 .import controller_read_safe
+.import sprite_init
+.import sprite_cursor_set
+.import sprite_cursor_set_b
 
 .export main
 
@@ -36,6 +39,10 @@ main:
 	jsr ppu_wait
 
 	jsr ppu_show_start_instruction
+	jsr ppu_update_frame
+	jsr ppu_wait
+
+	jsr sprite_init
 	jsr ppu_update_frame
 	jsr ppu_wait
 

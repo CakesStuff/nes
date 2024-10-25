@@ -13,6 +13,9 @@
 .export ppu_write_logo
 .export ppu_set_xscroll
 .export ppu_show_start_instruction
+.export sprite_init
+.export sprite_cursor_set
+.export sprite_cursor_set_b
 
 .include "defs.inc"
 
@@ -240,5 +243,199 @@ ppu_show_start_instruction:
 
 
 .segment "OAM"
-oam: .res 256
-;TODO: ADD SPRITES
+oam:
+sprite_d_1_tl: .res 4
+sprite_d_1_tr: .res 4
+sprite_d_1_bl: .res 4
+sprite_d_1_br: .res 4
+sprite_d_2_tl: .res 4
+sprite_d_2_tr: .res 4
+sprite_d_2_bl: .res 4
+sprite_d_2_br: .res 4
+sprite_sel_tl: .res 4
+sprite_sel_tr: .res 4
+sprite_sel_bl: .res 4
+sprite_sel_br: .res 4
+sprite_sel_t: .res 4
+sprite_sel_l: .res 4
+sprite_sel_b: .res 4
+sprite_sel_r: .res 4
+sprite_sel_tb: .res 4
+sprite_sel_lb: .res 4
+sprite_sel_bb: .res 4
+sprite_sel_rb: .res 4
+.res 176
+
+.segment "CODE"
+
+sprite_cursor_set:
+.assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
+    tya
+    clc
+    sbc #8
+    sta sprite_sel_tl
+    sta sprite_sel_t
+    sta sprite_sel_tr
+    clc
+    adc #8
+    sta sprite_sel_l
+    sta sprite_sel_r
+    clc
+    adc #8
+    sta sprite_sel_bl
+    sta sprite_sel_b
+    sta sprite_sel_br
+    txa
+    ldx #SPRITE_X_OFFSET
+    clc
+    sbc #8
+    sta sprite_sel_tl, X
+    sta sprite_sel_l, X
+    sta sprite_sel_bl, X
+    clc
+    adc #8
+    sta sprite_sel_t, X
+    sta sprite_sel_b, X
+    clc
+    adc #8
+    sta sprite_sel_tr, X
+    sta sprite_sel_r, X
+    sta sprite_sel_br, X
+    ldy #$FF
+    sty sprite_sel_tb
+    sty sprite_sel_lb
+    sty sprite_sel_rb
+    sty sprite_sel_bb
+    rts
+
+sprite_cursor_set_b:
+.assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
+    tya
+    clc
+    sbc #8
+    sta sprite_sel_tl
+    sta sprite_sel_t
+    sta sprite_sel_tb
+    sta sprite_sel_tr
+    clc
+    adc #8
+    sta sprite_sel_l
+    sta sprite_sel_r
+    clc
+    adc #8
+    sta sprite_sel_lb
+    sta sprite_sel_rb
+    clc
+    adc #8
+    sta sprite_sel_bl
+    sta sprite_sel_b
+    sta sprite_sel_bb
+    sta sprite_sel_br
+    txa
+    ldx #SPRITE_X_OFFSET
+    clc
+    sbc #8
+    sta sprite_sel_tl, X
+    sta sprite_sel_l, X
+    sta sprite_sel_lb, X
+    sta sprite_sel_bl, X
+    clc
+    adc #8
+    sta sprite_sel_t, X
+    sta sprite_sel_b, X
+    clc
+    adc #8
+    sta sprite_sel_tb, X
+    sta sprite_sel_bb, X
+    clc
+    adc #8
+    sta sprite_sel_tr, X
+    sta sprite_sel_r, X
+    sta sprite_sel_rb, X
+    sta sprite_sel_br, X
+    rts
+
+sprite_dice_1_set_tile:
+    ldx #SPRITE_TILE_OFFSET
+    sta sprite_d_1_tl, X
+    clc
+    adc #16
+    sta sprite_d_1_tr, X
+    clc
+    adc #16
+    sta sprite_d_1_bl, X
+    clc
+    adc #16
+    sta sprite_d_1_br, X
+    rts
+
+sprite_dice_2_set_tile:
+    ldx #SPRITE_TILE_OFFSET
+    sta sprite_d_2_tl, X
+    clc
+    adc #16
+    sta sprite_d_2_tr, X
+    clc
+    adc #16
+    sta sprite_d_2_bl, X
+    clc
+    adc #16
+    sta sprite_d_2_br, X
+    rts
+
+sprite_init:
+    ldx #SPRITE_ATTRIBUTE_OFFSET
+    lda #((SPRITE_PALETTE_DICE) & SPRITE_FLAG_MASK)
+    sta sprite_d_1_tl, X
+    sta sprite_d_1_tr, X
+    sta sprite_d_1_bl, X
+    sta sprite_d_1_br, X
+    sta sprite_d_2_tl, X
+    sta sprite_d_2_tr, X
+    sta sprite_d_2_bl, X
+    sta sprite_d_2_br, X
+
+    lda #SPRITE_D_1
+    jsr sprite_dice_1_set_tile
+    lda #SPRITE_D_1
+    jsr sprite_dice_2_set_tile
+
+    ldx #SPRITE_ATTRIBUTE_OFFSET
+    lda #((SPRITE_PALETTE_CURSOR) & SPRITE_FLAG_MASK)
+    sta sprite_sel_tl, X
+    ora #SPRITE_FLAG_FLIP_H
+    sta sprite_sel_tr, X
+    ora #SPRITE_FLAG_FLIP_V
+    sta sprite_sel_br, X
+    and #((~SPRITE_FLAG_FLIP_H) & SPRITE_FLAG_MASK)
+    sta sprite_sel_bl, X
+
+    lda #((SPRITE_PALETTE_CURSOR) & SPRITE_FLAG_MASK)
+    sta sprite_sel_t, X
+    sta sprite_sel_tb, X
+    sta sprite_sel_l, X
+    sta sprite_sel_lb, X
+    ora #(SPRITE_FLAG_FLIP_H | SPRITE_FLAG_FLIP_V);   :)
+    sta sprite_sel_b, X
+    sta sprite_sel_bb, X
+    sta sprite_sel_r, X
+    sta sprite_sel_rb, X
+
+    ldx #SPRITE_TILE_OFFSET
+    lda #SPRITE_SEL_TL
+    sta sprite_sel_tl, X
+    sta sprite_sel_tr, X
+    sta sprite_sel_bl, X
+    sta sprite_sel_br, X
+    lda #SPRITE_SEL_T
+    sta sprite_sel_t, X
+    sta sprite_sel_tb, X
+    sta sprite_sel_b, X
+    sta sprite_sel_bb, X
+    lda #SPRITE_SEL_L
+    sta sprite_sel_l, X
+    sta sprite_sel_lb, X
+    sta sprite_sel_r, X
+    sta sprite_sel_rb, X
+
+    rts
