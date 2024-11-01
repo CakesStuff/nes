@@ -1,6 +1,7 @@
 .import oam
 
 .export nmi
+.export nmi_count
 .exportzp nmi_ready
 .exportzp scroll_nmt
 .exportzp scroll_x
