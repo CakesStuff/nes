@@ -1,7 +1,13 @@
 .importzp nmi_ready
+.importzp nmi_count
 .import palette
 .importzp scroll_nmt
 .importzp scroll_x
+.import crand
+.import rand
+.import mod6
+.importzp dice_res_1
+.importzp dice_res_2
 
 .export oam
 .export ppu_init
@@ -16,6 +22,7 @@
 .export sprite_init
 .export sprite_cursor_set
 .export sprite_cursor_set_b
+.export dice_roll
 
 .include "defs.inc"
 
@@ -266,7 +273,109 @@ sprite_sel_bb: .res 4
 sprite_sel_rb: .res 4
 .res 176
 
+.segment "RODATA"
+
+DICE_BRING_UP_AMOUNT = (112 - 1)
+dice_table:
+    .byte (3  + DICE_BRING_UP_AMOUNT)
+    .byte (11 + DICE_BRING_UP_AMOUNT)
+    .byte (0  + DICE_BRING_UP_AMOUNT)
+    .byte (8  + DICE_BRING_UP_AMOUNT)
+    .byte (14 + DICE_BRING_UP_AMOUNT)
+    .byte (6  + DICE_BRING_UP_AMOUNT)
+
+.segment "ZEROPAGE"
+dice_1_state: .res 1
+dice_2_state: .res 1
+dice_wait_time: .res 1
+dice_wait_index: .res 1
+
 .segment "CODE"
+
+dice_hide:
+    lda #$FF
+    jmp dice_set_y
+
+dice_set_y:
+    ldx #SPRITE_Y_OFFSET
+    sta sprite_d_1_tl, X
+    sta sprite_d_1_tr, X
+    sta sprite_d_2_tl, X
+    sta sprite_d_2_tr, X
+    clc
+    adc #8
+    bcc :+
+    lda #$FF
+    :
+    sta sprite_d_1_bl, X
+    sta sprite_d_1_br, X
+    sta sprite_d_2_bl, X
+    sta sprite_d_2_br, X
+    rts
+
+dice_roll:
+    lda nmi_count
+    jsr crand
+    jsr rand
+    jsr mod6
+    sta dice_res_1
+    inc dice_res_1
+    tax
+    lda dice_table, X
+    sta dice_1_state
+    and #$F
+    jsr sprite_dice_1_set_tile
+    jsr rand
+    jsr mod6
+    sta dice_res_2
+    inc dice_res_2
+    tax
+    lda dice_table, X
+    sta dice_2_state
+    and #$F
+    jsr sprite_dice_2_set_tile
+
+    lda #%100000
+    sta dice_wait_time
+
+@roll_loop:
+    lda dice_wait_time
+    lsr A
+    lsr A
+    lsr A
+    lsr A
+    lsr A
+    sta dice_wait_index
+
+@wait_loop:
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    dec dice_wait_index
+    lda dice_wait_index
+    bne @wait_loop
+
+    ldx #SPRITE_Y_OFFSET
+    dec sprite_d_1_tl, X
+    lda sprite_d_1_tl, X
+    jsr dice_set_y
+
+    dec dice_1_state
+    lda dice_1_state
+    and #$F
+    jsr sprite_dice_1_set_tile
+    dec dice_2_state
+    lda dice_2_state
+    and #$F
+    jsr sprite_dice_2_set_tile
+
+    inc dice_wait_time
+    lda dice_wait_time
+    sec
+    sbc #(%100000 + DICE_BRING_UP_AMOUNT)
+    bne @roll_loop
+
+    rts
 
 sprite_cursor_set:
 .assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
@@ -437,5 +546,22 @@ sprite_init:
     sta sprite_sel_lb, X
     sta sprite_sel_r, X
     sta sprite_sel_rb, X
+
+    ldx #SPRITE_X_OFFSET
+    lda #160
+    sta sprite_d_2_br, X
+    sta sprite_d_2_tr, X
+    sec
+    sbc #8
+    sta sprite_d_2_bl, X
+    sta sprite_d_2_tl, X
+    lda #96
+    sta sprite_d_1_br, X
+    sta sprite_d_1_tr, X
+    sec
+    sbc #8
+    sta sprite_d_1_bl, X
+    sta sprite_d_1_tl, X
+    jsr dice_hide
 
     rts
