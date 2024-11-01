@@ -8,6 +8,8 @@
 .import ppu_set_xscroll
 .import ppu_show_start_instruction
 .import controller_read_safe
+.import controller_wait_on
+.import controller_wait_off
 .import sprite_init
 .import sprite_cursor_set
 .import sprite_cursor_set_b
@@ -17,6 +19,8 @@
 .export main
 .exportzp dice_res_1
 .exportzp dice_res_2
+
+.include "defs.inc"
 
 .segment "ZEROPAGE"
 
@@ -55,21 +59,12 @@ main:
 	jsr ppu_update_frame
 	jsr ppu_wait
 
-	:
-		jsr controller_read_safe
-		and #%00010000
-		beq :-
-		jsr ppu_switch
-		jsr ppu_update_frame
-		jsr ppu_wait
-
-	:
-		jsr controller_read_safe
-		cmp #0
-		beq :+
-		jmp :-
-
-	:
+	lda #(BUTTON_START)
+	jsr controller_wait_on
+	
+	jsr ppu_switch
+	jsr ppu_update_frame
+	jsr ppu_wait
 
 	lda #0
 	jsr srand
