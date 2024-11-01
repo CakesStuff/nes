@@ -271,7 +271,7 @@ sprite_sel_rb: .res 4
 sprite_cursor_set:
 .assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
     tya
-    clc
+    sec
     sbc #8
     sta sprite_sel_tl
     sta sprite_sel_t
@@ -287,7 +287,7 @@ sprite_cursor_set:
     sta sprite_sel_br
     txa
     ldx #SPRITE_X_OFFSET
-    clc
+    sec
     sbc #8
     sta sprite_sel_tl, X
     sta sprite_sel_l, X
@@ -311,7 +311,7 @@ sprite_cursor_set:
 sprite_cursor_set_b:
 .assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
     tya
-    clc
+    sec
     sbc #8
     sta sprite_sel_tl
     sta sprite_sel_t
@@ -333,7 +333,7 @@ sprite_cursor_set_b:
     sta sprite_sel_br
     txa
     ldx #SPRITE_X_OFFSET
-    clc
+    sec
     sbc #8
     sta sprite_sel_tl, X
     sta sprite_sel_l, X
