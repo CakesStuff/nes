@@ -14,7 +14,6 @@
 .export ppu_update_frame
 .export ppu_disable
 .export ppu_switch
-.export ppu_set_tile
 .export ppu_wait
 .export ppu_write_logo
 .export ppu_set_xscroll
@@ -23,6 +22,7 @@
 .export sprite_cursor_set
 .export sprite_cursor_set_b
 .export dice_roll
+.export ppu_start_game_animation
 
 .include "defs.inc"
 
@@ -40,6 +40,7 @@ spr_palette:
 
 .segment "ZEROPAGE"
 ppu_byte_buffer: .res 1
+ppu_loop_counter: .res 1
 ppu_address_buffer:
 ppu_address_buffer_low: .res 1
 ppu_address_buffer_high: .res 1
@@ -62,10 +63,17 @@ ppu_init:
     rts
 
 ppu_clear:
+    lda PPU_STATUS
+
     lda #$20
 	sta PPU_ADDR
 	ldx #$00
 	stx PPU_ADDR
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+
 	lda #TILE_EMPTY
 	ldy #8
 @loop:
@@ -94,35 +102,32 @@ ppu_switch:
     stx scroll_nmt
     rts
 
-ppu_set_tile:
-    pha
+.macro ppu_set_tile_off tile, tx, ty
     lda scroll_nmt
     clc
     adc #1
     and #%00000001
     asl A
     asl A
-    adc #$20
-    sta ppu_byte_buffer
-    tya
-    lsr A
-    lsr A
-    lsr A
-    adc ppu_byte_buffer
+    adc #($20 + (ty >> 3))
     sta PPU_ADDR
-    tya
-    asl A
-    asl A
-    asl A
-    asl A
-    asl A
-    stx ppu_byte_buffer
-    clc
-    adc ppu_byte_buffer
+    lda #(((ty << 5) + tx) & 255);FFS
     sta PPU_ADDR
-    pla
+    lda #(tile)
     sta PPU_DATA
-    rts
+.endmacro
+.macro ppu_set_tile_on tile, tx, ty
+    lda scroll_nmt
+    and #%00000001
+    asl A
+    asl A
+    adc #($20 + (ty >> 3))
+    sta PPU_ADDR
+    lda #(((ty << 5) + tx) & 255);FFS
+    sta PPU_ADDR
+    lda #(tile)
+    sta PPU_DATA
+.endmacro
 
 ppu_wait:
     lda nmi_ready
@@ -171,6 +176,8 @@ logo_data_13:   .byte TILE_EMPTY,       TILE_EMPTY,     TILE_EMPTY,     TILE_COR
 .segment "CODE"
 
 ppu_write_logo:
+    ldx PPU_STATUS
+
     and #%00000001
     asl A
     asl A
@@ -179,6 +186,10 @@ ppu_write_logo:
     sta PPU_ADDR
     ldx #0
     stx PPU_ADDR
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
 @xloop:
     lda logo_data_table_low, x
     sta ppu_address_buffer_low
@@ -213,10 +224,17 @@ ppu_write_logo:
     rts
 
 ppu_show_start_instruction:
+    lda PPU_STATUS
+
     lda #$26
     sta PPU_ADDR
     lda #$EA
     sta PPU_ADDR
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+
     lda #TILE_LETTER_P
     sta PPU_DATA
     lda #TILE_LETTER_R
@@ -248,6 +266,237 @@ ppu_show_start_instruction:
 
     rts
 
+ppu_start_game_animation:
+    jsr ppu_switch
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    lda PPU_STATUS
+
+    ppu_set_tile_on TILE_BORDER_B, 0, 2
+
+    ldx #0
+    stx PPU_SCROLL
+    stx PPU_SCROLL
+
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BL
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    ldx #16
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_CORNER_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda #1
+    sta ppu_loop_counter
+
+@loop:
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    lda PPU_STATUS
+
+    lda scroll_nmt
+    and #%00000001
+    asl A
+    asl A
+    adc #$20
+    sta ppu_byte_buffer
+    inc ppu_loop_counter
+    lda ppu_loop_counter
+    asl A
+    sec
+    sbc #1
+    pha
+    lsr A
+    lsr A
+    lsr A
+    clc
+    adc ppu_byte_buffer
+    sta ppu_address_buffer_high
+    sta PPU_ADDR
+    pla
+    asl A
+    asl A
+    asl A
+    asl A
+    asl A
+    sta ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+
+    lda #TILE_FULL
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #10
+    cmp ppu_loop_counter
+    bpl :+
+
+    lda #TILE_ONE
+    pha
+    sta PPU_DATA
+    lda ppu_loop_counter
+    sec
+    sbc #10
+    pha
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    lda #TILE_FULL
+    pha
+    sta PPU_DATA
+    lda ppu_loop_counter
+    pha
+    sta PPU_DATA
+
+    :
+
+    lda #TILE_BORDER_L
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    ldx #16
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_BORDER_R
+    sta PPU_DATA
+    pla
+    tax
+    pla
+    sta PPU_DATA
+    stx PPU_DATA
+    lda #TILE_FULL
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    
+    jsr ppu_update_frame
+    jsr ppu_wait
+    
+    lda #13
+    cmp ppu_loop_counter
+    beq @loop_end
+
+    lda PPU_STATUS
+
+    lda #32
+    clc
+    adc ppu_address_buffer_low
+    sta ppu_address_buffer_low
+    lda #0
+    adc ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+
+    lda #TILE_BORDER_H
+    ldx #7
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_DCORNER_L
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    ldx #16
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_DCORNER_R
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    ldx #7
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+
+    jmp @loop
+
+@loop_end:
+
+    lda PPU_STATUS
+
+    ppu_set_tile_on TILE_BORDER_T, 0, ((12 * 2) + 2)
+
+    ldx #0
+    stx PPU_SCROLL
+    stx PPU_SCROLL
+
+    ldx #6
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_CORNER_TL
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    ldx #16
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+    lda #TILE_CORNER_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    ldx #7
+    :
+        sta PPU_DATA
+        dex
+        bne :-
+
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    lda PPU_STATUS
+
+    ppu_set_tile_on TILE_DICE_TL, (DICE_ROLL_X-1), (DICE_ROLL_Y-1)
+    ppu_set_tile_on TILE_DICE_TR, (DICE_ROLL_X),   (DICE_ROLL_Y-1)
+    ppu_set_tile_on TILE_DICE_BL, (DICE_ROLL_X-1), (DICE_ROLL_Y)
+    ppu_set_tile_on TILE_DICE_BR, (DICE_ROLL_X),   (DICE_ROLL_Y)
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    rts
+;TODO: BOARD FUNCTIONS
 
 .segment "OAM"
 oam:

@@ -1,7 +1,6 @@
 .import ppu_init
 .import ppu_update_frame
 .import ppu_switch
-.import ppu_set_tile
 .import ppu_wait
 .import ppu_write_logo
 .import ppu_disable
@@ -15,6 +14,7 @@
 .import sprite_cursor_set_b
 .import dice_roll
 .import srand
+.import ppu_start_game_animation
 
 .export main
 .exportzp dice_res_1
@@ -61,14 +61,17 @@ main:
 
 	lda #(BUTTON_START)
 	jsr controller_wait_on
-	
-	jsr ppu_switch
-	jsr ppu_update_frame
-	jsr ppu_wait
 
 	lda #0
 	jsr srand
+
+	jsr ppu_update_frame
+	jsr ppu_wait
+	;Wait on vblank to not mess up screen
+	jsr ppu_start_game_animation
+	;test
 	jsr dice_roll
+
 	:
 		jsr ppu_update_frame
 		jsr ppu_wait
