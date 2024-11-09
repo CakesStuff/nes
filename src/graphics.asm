@@ -35,7 +35,7 @@ bgr_palette:
 spr_palette:
 .byte $0A, $28, $38, $39
 .byte $0A, $1D, $20, $10
-.byte $00, $00, $00, $00
+.byte $0A, $11, $22, $21
 .byte $00, $00, $00, $00
 
 .segment "ZEROPAGE"
