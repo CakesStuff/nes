@@ -15,6 +15,8 @@
 .import dice_roll
 .import srand
 .import ppu_start_game_animation
+.import ppu_state_switch_left
+.import ppu_state_switch_right
 
 .export main
 .exportzp dice_res_1

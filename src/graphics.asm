@@ -23,6 +23,8 @@
 .export sprite_cursor_set_b
 .export dice_roll
 .export ppu_start_game_animation
+.export ppu_state_switch_left
+.export ppu_state_switch_right
 
 .include "defs.inc"
 
@@ -496,6 +498,790 @@ ppu_start_game_animation:
     jsr ppu_wait
 
     rts
+
+.segment "BSS"
+
+states_left: .res 13
+states_right: .res 13
+
+.segment "CODE"
+ppu_state_switch_left:
+    sta ppu_byte_buffer
+    lsr A
+    lsr A
+    sta ppu_address_buffer_high
+    lda ppu_byte_buffer
+    asl A
+    asl A
+    asl A
+    asl A
+    asl A
+    asl A
+    sta ppu_address_buffer_low
+
+    lda scroll_nmt
+    and #%00000001
+    asl A
+    asl A
+    adc #$20
+    adc ppu_address_buffer_high
+    sta ppu_address_buffer_high
+    lda ppu_address_buffer_low
+    adc #5
+    sta ppu_address_buffer_low
+
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    lda PPU_STATUS
+    lda ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    tax
+
+    lda states_left, X
+    cmp #0
+    bne :+
+        lda #1
+        sta states_left, X
+        jmp @this_extended
+    :
+    lda #0
+    sta states_left, X
+
+    lda ppu_byte_buffer
+    cmp #1
+    bne :+
+        jmp @ppu_state_switch_left_1_retracted
+    :
+
+    dex
+
+    lda states_left, X
+    cmp #0
+
+    beq :+
+
+    ;------|
+    ;-+----/
+    ;-/
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_TL
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    ;-\
+    ;-|
+    ;-/
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_L
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+    
+@middle_row_start_retracted:
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #TILE_CROSS
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda #TILE_BORDER_L
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    cmp #12
+    bne :+
+        jmp @ppu_state_switch_left_12_retracted
+    :
+
+    tax
+    inx
+
+    lda states_left, X
+    cmp #0
+    beq :+
+    
+    ;-\
+    ;-+----\
+    ;------|
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BL
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    ;-\
+    ;-|
+    ;-/
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_L
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@this_extended:
+    lda ppu_byte_buffer
+    cmp #1
+    bne :+
+        jmp @ppu_state_switch_left_1_extended
+    :
+
+    dex
+
+    lda states_left, X
+    cmp #0
+
+    beq :+
+
+    ;------|
+    ;------|
+    ;------|
+    
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_L
+    sta PPU_DATA
+    
+    jmp :++
+
+    :
+
+    ;-\
+    ;-+----\
+    ;------|
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BL
+    sta PPU_DATA
+
+    :
+    
+@middle_row_start_extended:
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #TILE_FULL
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda ppu_byte_buffer
+    cmp #10
+    bpl :+
+
+    pha
+    lda #TILE_FULL
+    sta PPU_DATA
+    pla
+    clc
+    adc #1
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    sec
+    sbc #9
+    pha
+    lda #TILE_ONE
+    sta PPU_DATA
+    pla
+    sta PPU_DATA
+
+    :
+
+    lda #TILE_BORDER_L
+    sta PPU_DATA
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    cmp #12
+    beq @ppu_state_switch_left_12_extended
+
+    tax
+    inx
+
+    lda states_left, X
+    cmp #0
+    beq :+
+
+    ;------|
+    ;------|
+    ;------|
+    
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_L
+    sta PPU_DATA
+
+    jmp :++
+
+    :
+    
+    ;------|
+    ;-+----/
+    ;-/
+
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_TL
+    sta PPU_DATA
+
+    :
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@ppu_state_switch_left_1_extended:
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BL
+    sta PPU_DATA
+    jmp @middle_row_start_extended
+
+@ppu_state_switch_left_1_retracted:
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BL
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    jmp @middle_row_start_retracted
+
+@ppu_state_switch_left_12_extended:
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_TL
+    sta PPU_DATA
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@ppu_state_switch_left_12_retracted:
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_TL
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+ppu_state_switch_right:
+    sta ppu_byte_buffer
+    lsr A
+    lsr A
+    sta ppu_address_buffer_high
+    lda ppu_byte_buffer
+    asl A
+    asl A
+    asl A
+    asl A
+    asl A
+    asl A
+    sta ppu_address_buffer_low
+
+    lda scroll_nmt
+    and #%00000001
+    asl A
+    asl A
+    adc #$20
+    adc ppu_address_buffer_high
+    sta ppu_address_buffer_high
+    lda ppu_address_buffer_low
+    adc #21
+    sta ppu_address_buffer_low
+
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    lda PPU_STATUS
+    lda ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    tax
+
+    lda states_right, X
+    cmp #0
+    bne :+
+        lda #1
+        sta states_right, X
+        jmp @this_extended
+    :
+    lda #0
+    sta states_right, X
+
+    lda ppu_byte_buffer
+    cmp #1
+    bne :+
+        jmp @ppu_state_switch_right_1_retracted
+    :
+
+    dex
+
+    lda states_right, X
+    cmp #0
+
+    beq :+
+
+    ;------|
+    ;-+----/
+    ;-/
+
+    lda #TILE_CORNER_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_BL
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    ;-\
+    ;-|
+    ;-/
+
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_R
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+    
+@middle_row_start_retracted:
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_BORDER_R
+    sta PPU_DATA
+
+    lda #TILE_CROSS
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    cmp #12
+    bne :+
+        jmp @ppu_state_switch_right_12_retracted
+    :
+
+    tax
+    inx
+
+    lda states_right, X
+    cmp #0
+    beq :+
+    
+    ;-\
+    ;-+----\
+    ;------|
+
+    lda #TILE_CORNER_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_TL
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    ;-\
+    ;-|
+    ;-/
+
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_DCORNER_R
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@this_extended:
+    lda ppu_byte_buffer
+    cmp #1
+    bne :+
+        jmp @ppu_state_switch_right_1_extended
+    :
+
+    dex
+
+    lda states_right, X
+    cmp #0
+
+    beq :+
+
+    ;------|
+    ;------|
+    ;------|
+    
+    lda #TILE_DCORNER_R
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    
+    jmp :++
+
+    :
+
+    ;-\
+    ;-+----\
+    ;------|
+
+    lda #TILE_CORNER_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_TL
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+    
+@middle_row_start_extended:
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta ppu_address_buffer_high
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda #TILE_BORDER_R
+    sta PPU_DATA
+
+    lda ppu_byte_buffer
+    cmp #10
+    bpl :+
+
+    pha
+    lda #TILE_FULL
+    sta PPU_DATA
+    pla
+    clc
+    adc #1
+    sta PPU_DATA
+    jmp :++
+
+    :
+
+    sec
+    sbc #9
+    pha
+    lda #TILE_ONE
+    sta PPU_DATA
+    pla
+    sta PPU_DATA
+
+    :
+
+    lda #TILE_FULL
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda ppu_address_buffer_low
+    clc
+    adc #32
+    sta ppu_address_buffer_low
+    lda ppu_address_buffer_high
+    adc #0
+    sta PPU_ADDR
+    lda ppu_address_buffer_low
+    sta PPU_ADDR
+
+    lda ppu_byte_buffer
+    cmp #12
+    beq @ppu_state_switch_right_12_extended
+
+    tax
+    inx
+
+    lda states_right, X
+    cmp #0
+    beq :+
+
+    ;------|
+    ;------|
+    ;------|
+    
+    lda #TILE_DCORNER_R
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    jmp :++
+
+    :
+    
+    ;------|
+    ;-+----/
+    ;-/
+
+    lda #TILE_CORNER_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_EMPTY_BL
+    sta PPU_DATA
+    lda #TILE_BORDER_H
+    sta PPU_DATA
+    sta PPU_DATA
+
+    :
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@ppu_state_switch_right_1_extended:
+    lda #TILE_CORNER_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    jmp @middle_row_start_extended
+
+@ppu_state_switch_right_1_retracted:
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_BR
+    sta PPU_DATA
+    lda #TILE_BORDER_B
+    sta PPU_DATA
+    sta PPU_DATA
+    jmp @middle_row_start_retracted
+
+@ppu_state_switch_right_12_extended:
+    lda #TILE_CORNER_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+@ppu_state_switch_right_12_retracted:
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    sta PPU_DATA
+    sta PPU_DATA
+    lda #TILE_CORNER_TR
+    sta PPU_DATA
+    lda #TILE_BORDER_T
+    sta PPU_DATA
+    sta PPU_DATA
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+    rts
+
+
 ;TODO: BOARD FUNCTIONS
 
 .segment "OAM"
