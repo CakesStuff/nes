@@ -1,3 +1,4 @@
+.import reset
 .import ppu_init
 .import ppu_update_frame
 .import ppu_switch
@@ -12,11 +13,9 @@
 .import sprite_init
 .import sprite_cursor_set
 .import sprite_cursor_set_b
-.import dice_roll
 .import srand
 .import ppu_start_game_animation
-.import ppu_state_switch_left
-.import ppu_state_switch_right
+.import game_update
 
 .export main
 .exportzp dice_res_1
@@ -71,10 +70,29 @@ main:
 	jsr ppu_wait
 	;Wait on vblank to not mess up screen
 	jsr ppu_start_game_animation
-	;test
-	jsr dice_roll
+
+	jsr ppu_update_frame
+	jsr ppu_wait
+	ldx #(DICE_ROLL_X * 8)
+	ldy #(DICE_ROLL_Y * 8)
+	jsr sprite_cursor_set_b
+	jsr ppu_update_frame
+	jsr ppu_wait
 
 	:
+		jsr game_update
+		cmp #0
+		bne :+
+
 		jsr ppu_update_frame
 		jsr ppu_wait
 		jmp :-
+	:
+
+	;TODO: SHOW WINNER IN A
+	lda #(BUTTON_START)
+	jsr controller_wait_on
+
+	jsr ppu_disable
+	jsr ppu_wait
+	jmp reset
