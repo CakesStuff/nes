@@ -35,7 +35,7 @@ game_update:
     jmp @state_p2_choice
 
 @state_p1_roll:
-@state_p2_roll
+@state_p2_roll:
     lda #(BUTTON_A)
     jsr controller_wait_on
     lda #(BUTTON_A)
