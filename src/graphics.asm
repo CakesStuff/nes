@@ -1286,7 +1286,6 @@ ppu_state_switch_right:
     rts
 
 
-;TODO: BOARD FUNCTIONS
 
 .segment "OAM"
 oam:
@@ -1503,6 +1502,7 @@ sprite_cursor_set_b:
     sta sprite_sel_br, X
     rts
 
+;TODO: CURSOR COLOR SWITCHING
 sprite_dice_1_set_tile:
     ldx #SPRITE_TILE_OFFSET
     sta sprite_d_1_tl, X
