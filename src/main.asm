@@ -62,6 +62,8 @@ main:
 
 	lda #(BUTTON_START)
 	jsr controller_wait_on
+	lda #(BUTTON_START)
+	jsr controller_wait_off
 
 	lda #0
 	jsr srand
@@ -92,6 +94,8 @@ main:
 	;TODO: SHOW WINNER IN A
 	lda #(BUTTON_START)
 	jsr controller_wait_on
+	lda #(BUTTON_START)
+	jsr controller_wait_off
 
 	jsr ppu_disable
 	jsr ppu_wait
