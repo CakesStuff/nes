@@ -489,6 +489,10 @@ ppu_start_game_animation:
     ppu_set_tile_on TILE_DICE_TR, (DICE_ROLL_X),   (DICE_ROLL_Y-1)
     ppu_set_tile_on TILE_DICE_BL, (DICE_ROLL_X-1), (DICE_ROLL_Y)
     ppu_set_tile_on TILE_DICE_BR, (DICE_ROLL_X),   (DICE_ROLL_Y)
+    ppu_set_tile_on TILE_CONF_TL, (CONF_BTN_X-1),  (CONF_BTN_Y-1)
+    ppu_set_tile_on TILE_CONF_TR, (CONF_BTN_X),    (CONF_BTN_Y-1)
+    ppu_set_tile_on TILE_CONF_BL, (CONF_BTN_X-1),  (CONF_BTN_Y)
+    ppu_set_tile_on TILE_CONF_BR, (CONF_BTN_X),    (CONF_BTN_Y)
 
     lda #0
     sta PPU_SCROLL
@@ -1416,7 +1420,7 @@ sprite_cursor_set:
 .assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
     tya
     sec
-    sbc #8
+    sbc #17
     sta sprite_sel_tl
     sta sprite_sel_t
     sta sprite_sel_tr
@@ -1432,7 +1436,7 @@ sprite_cursor_set:
     txa
     ldx #SPRITE_X_OFFSET
     sec
-    sbc #8
+    sbc #16
     sta sprite_sel_tl, X
     sta sprite_sel_l, X
     sta sprite_sel_bl, X
@@ -1456,7 +1460,7 @@ sprite_cursor_set_b:
 .assert SPRITE_Y_OFFSET = 0, error, "Sprite y location is assumed to be Byte 0!"
     tya
     sec
-    sbc #8
+    sbc #17
     sta sprite_sel_tl
     sta sprite_sel_t
     sta sprite_sel_tb
@@ -1478,7 +1482,7 @@ sprite_cursor_set_b:
     txa
     ldx #SPRITE_X_OFFSET
     sec
-    sbc #8
+    sbc #16
     sta sprite_sel_tl, X
     sta sprite_sel_l, X
     sta sprite_sel_lb, X
