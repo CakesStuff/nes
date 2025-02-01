@@ -1423,6 +1423,7 @@ sprite_cursor_set:
     sbc #17
     sta sprite_sel_tl
     sta sprite_sel_t
+    sta sprite_sel_tb
     sta sprite_sel_tr
     clc
     adc #8
@@ -1432,6 +1433,7 @@ sprite_cursor_set:
     adc #8
     sta sprite_sel_bl
     sta sprite_sel_b
+    sta sprite_sel_bb
     sta sprite_sel_br
     txa
     ldx #SPRITE_X_OFFSET
@@ -1446,14 +1448,16 @@ sprite_cursor_set:
     sta sprite_sel_b, X
     clc
     adc #8
+    sta sprite_sel_tb, X
+    sta sprite_sel_bb, X
+    clc
+    adc #8
     sta sprite_sel_tr, X
     sta sprite_sel_r, X
     sta sprite_sel_br, X
     ldy #$FF
-    sty sprite_sel_tb
     sty sprite_sel_lb
     sty sprite_sel_rb
-    sty sprite_sel_bb
     rts
 
 sprite_cursor_set_b:
