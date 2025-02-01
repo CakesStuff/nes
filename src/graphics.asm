@@ -21,6 +21,7 @@
 .export sprite_init
 .export sprite_cursor_set
 .export sprite_cursor_set_b
+.export sprite_cursor_color_switch
 .export dice_roll
 .export ppu_start_game_animation
 .export ppu_state_switch_left
@@ -1502,7 +1503,46 @@ sprite_cursor_set_b:
     sta sprite_sel_br, X
     rts
 
-;TODO: CURSOR COLOR SWITCHING
+sprite_cursor_color_switch:
+    ldx #SPRITE_ATTRIBUTE_OFFSET
+    lda sprite_sel_tl, X
+    eor #%10
+    sta sprite_sel_tl, X
+    lda sprite_sel_tr, X
+    eor #%10
+    sta sprite_sel_tr, X
+    lda sprite_sel_bl, X
+    eor #%10
+    sta sprite_sel_bl, X
+    lda sprite_sel_br, X
+    eor #%10
+    sta sprite_sel_br, X
+    lda sprite_sel_t, X
+    eor #%10
+    sta sprite_sel_t, X
+    lda sprite_sel_l, X
+    eor #%10
+    sta sprite_sel_l, X
+    lda sprite_sel_b, X
+    eor #%10
+    sta sprite_sel_b, X
+    lda sprite_sel_r, X
+    eor #%10
+    sta sprite_sel_r, X
+    lda sprite_sel_tb, X
+    eor #%10
+    sta sprite_sel_tb, X
+    lda sprite_sel_lb, X
+    eor #%10
+    sta sprite_sel_lb, X
+    lda sprite_sel_bb, X
+    eor #%10
+    sta sprite_sel_bb, X
+    lda sprite_sel_rb, X
+    eor #%10
+    sta sprite_sel_rb, X
+    rts
+
 sprite_dice_1_set_tile:
     ldx #SPRITE_TILE_OFFSET
     sta sprite_d_1_tl, X
