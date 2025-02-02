@@ -23,6 +23,7 @@
 .export sprite_cursor_set_b
 .export sprite_cursor_color_switch
 .export dice_roll
+.export dice_hide
 .export ppu_start_game_animation
 .export ppu_state_switch_left
 .export ppu_state_switch_right
