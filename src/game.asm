@@ -2,10 +2,14 @@
 .import controller_wait_on
 .import controller_wait_off
 .import dice_roll
+.import dice_hide
 .importzp dice_res_1
 .importzp dice_res_2
 .import sprite_cursor_set
 .import sprite_cursor_set_b
+.import sprite_cursor_color_switch
+.import ppu_state_switch_left
+.import ppu_state_switch_right
 
 .export game_update
 
@@ -16,6 +20,10 @@
 game_state: .res 1
 sum: .res 1
 outside_index: .res 1
+left_states: .res 12
+left_sum: .res 1
+right_states: .res 12
+right_sum: .res 1
 
 .segment "CODE"
 
@@ -119,17 +127,83 @@ game_update:
 
     jsr game_place_cursor
     pla
+    pha
     and #BUTTON_A
-    beq :++
+    beq :++++
         lda outside_index
         cmp dice_res_1
         beq :+
         cmp dice_res_2
         beq :+
         cmp sum
-        bne :++
+        bne :++++
     :
-        ;TODO: PLACE SELECTOR, DO THE SELECTING CHECK IF ALREADY SELECTED
+        sec
+        sbc #1
+        tax
+        lda game_state
+        cmp #STATE_P2_CHOICE
+        beq :+
+
+        lda left_states, X
+        cmp #1
+        beq :+++
+
+        lda #1
+        sta left_states, X
+        inc left_sum
+
+        inx
+        txa
+        pha
+        jsr game_place_cursor
+        pla
+        jsr ppu_state_switch_left
+        lda #STATE_P1_CONFIRM
+        sta game_state
+        jmp :++
+    :
+        lda right_states, X
+        cmp #1
+        beq :++
+
+        lda #1
+        sta right_states, X
+        inc right_sum
+
+        inx
+        txa
+        pha
+        jsr game_place_cursor
+        pla
+        jsr ppu_state_switch_right
+        lda #STATE_P2_CONFIRM
+        sta game_state
+    :
+        ldx #(CONF_BTN_X * 8)
+        ldy #(CONF_BTN_Y * 8)
+        jsr sprite_cursor_set_b
+        jsr dice_hide
+    :
+
+    pla
+    and #BUTTON_B
+    beq :++
+        ldx #(CONF_BTN_X * 8)
+        ldy #(CONF_BTN_Y * 8)
+        jsr sprite_cursor_set_b
+        jsr dice_hide
+
+        lda game_state
+        cmp #STATE_P2_CHOICE
+        beq :+
+        
+        lda #STATE_P1_CONFIRM
+        sta game_state
+        jmp :++
+    :
+        lda #STATE_P2_CONFIRM
+        sta game_state
     :
 
     lda #0
@@ -137,6 +211,49 @@ game_update:
 
 @state_p1_confirm:
 @state_p2_confirm:
-    ;TODO:
+    lda #BUTTON_A
+    jsr controller_wait_on
+    lda #BUTTON_A
+    jsr controller_wait_off
+
+    ldx #(DICE_ROLL_X * 8)
+    ldy #(DICE_ROLL_Y * 8)
+    jsr sprite_cursor_set_b
+    jsr sprite_cursor_color_switch
+
+    lda game_state
+    cmp #STATE_P2_CONFIRM
+    beq :+
+        lda #STATE_P2_ROLL
+        sta game_state
+        lda outside_index
+        tax
+        dex
+        lda left_states, X
+        cmp #0
+        beq :++
+        inx
+        txa
+        jsr ppu_state_switch_left
+
+        ;TODO: WIN
+
+        jmp :++
+    :
+        lda #STATE_P1_ROLL
+        sta game_state
+        lda outside_index
+        tax
+        dex
+        lda right_states, X
+        cmp #0
+        beq :+
+        inx
+        txa
+        jsr ppu_state_switch_right
+        
+        ;TODO: WIN
+    :
+
     lda #0
     rts
