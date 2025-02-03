@@ -275,7 +275,7 @@ game_update:
 
         jsr sprite_cursor_color_switch
 
-        lda #TILE_ONE
+        lda #TILE_TWO
         jsr ppu_show_winner
 
         lda #BUTTON_A

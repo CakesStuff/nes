@@ -544,9 +544,9 @@ ppu_show_winner:
     lda #TILE_EXCLAMATION
     sta PPU_DATA
 
-    ldx #(15 * 8)
-    ldy #(7 * 8)
-    jsr sprite_cursor_set_b
+    ldx #(17 * 8)
+    ldy #(8 * 8)
+    jsr sprite_cursor_set
 
     jsr ppu_update_frame
     jsr ppu_wait
