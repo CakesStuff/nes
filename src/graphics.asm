@@ -27,6 +27,7 @@
 .export ppu_start_game_animation
 .export ppu_state_switch_left
 .export ppu_state_switch_right
+.export ppu_show_winner
 
 .include "defs.inc"
 
@@ -500,6 +501,53 @@ ppu_start_game_animation:
     sta PPU_SCROLL
     sta PPU_SCROLL
     
+    jsr ppu_update_frame
+    jsr ppu_wait
+
+    rts
+
+ppu_show_winner:
+    pha
+
+    lda PPU_STATUS
+
+    ppu_set_tile_on TILE_LETTER_P, 9, 7
+
+    lda #0
+    sta PPU_SCROLL
+    sta PPU_SCROLL
+
+    lda #TILE_LETTER_L
+    sta PPU_DATA
+    lda #TILE_LETTER_A
+    sta PPU_DATA
+    lda #TILE_LETTER_Y
+    sta PPU_DATA
+    lda #TILE_LETTER_E
+    sta PPU_DATA
+    lda #TILE_LETTER_R
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    lda #TILE_FULL
+    sta PPU_DATA
+    pla
+    sta PPU_DATA
+    lda #TILE_EMPTY
+    sta PPU_DATA
+    lda #TILE_LETTER_W
+    sta PPU_DATA
+    lda #TILE_LETTER_O
+    sta PPU_DATA
+    lda #TILE_LETTER_N
+    sta PPU_DATA
+    lda #TILE_EXCLAMATION
+    sta PPU_DATA
+
+    ldx #(15 * 8)
+    ldy #(7 * 8)
+    jsr sprite_cursor_set_b
+
     jsr ppu_update_frame
     jsr ppu_wait
 

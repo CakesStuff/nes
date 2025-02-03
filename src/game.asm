@@ -10,6 +10,8 @@
 .import sprite_cursor_color_switch
 .import ppu_state_switch_left
 .import ppu_state_switch_right
+.import ppu_show_winner
+.import reset
 
 .export game_update
 
@@ -238,9 +240,20 @@ game_update:
         txa
         jsr ppu_state_switch_left
 
-        ;TODO: WIN
+        lda left_sum
+        cmp #12
+        bne :++
+        
+        jsr sprite_cursor_color_switch
 
-        jmp :++
+        lda #TILE_ONE
+        jsr ppu_show_winner
+
+        lda #BUTTON_A
+        jsr controller_wait_on
+        lda #BUTTON_A
+        jsr controller_wait_off
+        jmp reset
     :
         lda #STATE_P1_ROLL
         sta game_state
@@ -256,7 +269,20 @@ game_update:
         txa
         jsr ppu_state_switch_right
 
-        ;TODO: WIN
+        lda right_sum
+        cmp #12
+        bne :+
+
+        jsr sprite_cursor_color_switch
+
+        lda #TILE_ONE
+        jsr ppu_show_winner
+
+        lda #BUTTON_A
+        jsr controller_wait_on
+        lda #BUTTON_A
+        jsr controller_wait_off
+        jmp reset
     :
 
     lda #0
