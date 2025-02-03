@@ -146,8 +146,8 @@ game_update:
         beq :+
 
         lda left_states, X
-        cmp #1
-        beq :+++
+        cmp #0
+        bne :+++
 
         lda #1
         sta left_states, X
@@ -164,8 +164,8 @@ game_update:
         jmp :++
     :
         lda right_states, X
-        cmp #1
-        beq :++
+        cmp #0
+        bne :++
 
         lda #1
         sta right_states, X
@@ -230,8 +230,10 @@ game_update:
         tax
         dex
         lda left_states, X
-        cmp #0
-        beq :++
+        cmp #1
+        bne :++
+        lda #2
+        sta left_states, X
         inx
         txa
         jsr ppu_state_switch_left
@@ -246,12 +248,14 @@ game_update:
         tax
         dex
         lda right_states, X
-        cmp #0
-        beq :+
+        cmp #1
+        bne :+
+        lda #2
+        sta right_states, X
         inx
         txa
         jsr ppu_state_switch_right
-        
+
         ;TODO: WIN
     :
 
