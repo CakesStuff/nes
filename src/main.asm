@@ -91,7 +91,7 @@ main:
 		jmp :-
 	:
 
-	;TODO: SHOW WINNER IN A
+	;UNUSED
 	lda #(BUTTON_START)
 	jsr controller_wait_on
 	lda #(BUTTON_START)
